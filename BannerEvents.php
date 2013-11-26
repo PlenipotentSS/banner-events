@@ -35,8 +35,7 @@ function ss_register_banner_events() {
 		'not_found_in_trash' => __( 'No events found in Trash'),
 	);
 
-	
-
+   
 	/* Arguments for the product post type. */
 	$banner_events_args = array(
 		'labels' => $banner_events_labels,
@@ -74,6 +73,8 @@ function ss_banner_events_mbe_function( $post ) {
 	$ss_be_mbe_link = get_post_meta($post->ID, '_ss_be_mbe_link', true);
 	$ss_be_mbe_fb = get_post_meta($post->ID, '_ss_be_mbe_fb', true);
 	$ss_be_mbe_when = get_post_meta($post->ID, '_ss_be_mbe_when', true);
+	$ss_be_mbe_isweekly = (get_post_meta($post->ID, '_ss_be_mbe_isweekly', true) == 'yes') ? 'checked="yes"' : '';
+	$ss_be_mbe_weeklyDay = get_post_meta($post->ID, '_ss_be_mbe_weeklyDay', true);
 	$ss_be_mbe_isfrequent = (get_post_meta($post->ID, '_ss_be_mbe_isfrequent', true) == 'yes') ? 'checked="yes"' : '';
 	$ss_be_mbe_stick2home = (get_post_meta($post->ID, '_ss_be_mbe_stick2home', true) == 'yes') ? 'checked="yes"' : '';
 	$ss_be_mbe_where = get_post_meta($post->ID, '_ss_be_mbe_where', true);
@@ -86,8 +87,20 @@ function ss_banner_events_mbe_function( $post ) {
 	<p>Title:<BR>
 	<input type='text' name='ss_be_mbe_title' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_title); ?>'> </p>
 	<p>When:<BR>
-	<input type='text' name='ss_be_mbe_when' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_when); ?>'> 
-	<input type='checkbox' name='ss_be_mbe_isfrequent' value='yes' <?echo $ss_be_mbe_isfrequent ?>> bi-weekly, weekly, or monthly dance</p>
+    <input type='text' id="ss_be_mbe_when_text" name='ss_be_mbe_when' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_when); ?>'>
+    <div id="when_select" style="display:none;">
+        <select id="ss_be_mbe_when_select" name="ss_be_mbe_weeklyDay">
+            <option value="Monday">Mondays</option>
+            <option value="Tuesday">Tuesdays</option>
+            <option value="Wednesday">Wednesdays</option>
+            <option value="Thursday">Thursdays</option>
+            <option value="Friday">Fridays</option>
+            <option value="Saturday">Saturdays</option>
+            <option value="Sunday">Sundays</option>
+        </select><br />
+    </div>
+    <input type='checkbox' id="ss_be_mbe_isweekly" name='ss_be_mbe_isweekly' onChange="weekly_select()" value='yes' <?echo $ss_be_mbe_isweekly ?>> Weekly Dance</p>
+	<input type='checkbox' name='ss_be_mbe_isfrequent' value='yes' <?echo $ss_be_mbe_isfrequent ?>> Other Frequency</p>
 	<p>Where:<BR>
 	<input type='text' name='ss_be_mbe_where' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_where); ?>'> </p>
 	<p>Link to Event:<BR>
@@ -104,6 +117,23 @@ function ss_banner_events_mbe_function( $post ) {
 			var theIMG = document.getElementById('ss_be_mbe_image').value;
 			document.getElementById('ss_be_mbe_img_obj').src = theIMG;
 		}
+        function weekly_select() {
+            var theCheckbox = document.getElementById('ss_be_mbe_isweekly');
+            if (theCheckbox.checked) {
+                document.getElementById('ss_be_mbe_when_select').disabled = false;
+                document.getElementById('when_select').style.display = 'inline';
+                for (var i=0; i<document.getElementById('ss_be_mbe_when_select').length;i++) {
+                    if ( "<? echo $ss_be_mbe_weeklyDay; ?>" == document.getElementById('ss_be_mbe_when_select')[i].value) {
+                        document.getElementById('ss_be_mbe_when_select')[i].selected = "Selected";
+                        break;
+                    }
+                }
+            } else {
+                document.getElementById('ss_be_mbe_when_select').disabled = true;
+                document.getElementById('when_select').style.display = 'none';
+            }
+        }
+        weekly_select();
 	</script>
 	<?
 }
@@ -116,6 +146,8 @@ function ss_be_mbe_save_meta( $post_id ) {
 	add_post_meta($post_id, '_ss_be_mbe_fb', strip_tags($_POST['ss_be_mbe_fb']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_fb', strip_tags($_POST['ss_be_mbe_fb']) );
 	add_post_meta($post_id, '_ss_be_mbe_when', strip_tags($_POST['ss_be_mbe_when']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_when', strip_tags($_POST['ss_be_mbe_when']) );
 	add_post_meta($post_id, '_ss_be_mbe_isfrequent', strip_tags($_POST['ss_be_mbe_isfrequent']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_isfrequent', strip_tags($_POST['ss_be_mbe_isfrequent']) );
+    add_post_meta($post_id, '_ss_be_mbe_isweekly', strip_tags($_POST['ss_be_mbe_isweekly']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_isweekly', strip_tags($_POST['ss_be_mbe_isweekly']) );
+    add_post_meta($post_id, '_ss_be_mbe_weeklyDay', strip_tags($_POST['ss_be_mbe_weeklyDay']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_weeklyDay', strip_tags($_POST['ss_be_mbe_weeklyDay']) );
 	add_post_meta($post_id, '_ss_be_mbe_stick2home', strip_tags($_POST['ss_be_mbe_stick2home']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_stick2home', strip_tags($_POST['ss_be_mbe_stick2home']) );
 	add_post_meta($post_id, '_ss_be_mbe_where', strip_tags($_POST['ss_be_mbe_where']) , true ) or update_post_meta( $post_id, '_ss_be_mbe_where', $_POST['ss_be_mbe_where'] );
 	if ( isset($_POST['ss_be_mbe_image']) ){
@@ -224,6 +256,8 @@ function ss_be_display_banners($atts){
 		$fb = $meta['_ss_be_mbe_fb'][0];
 		$when = $meta['_ss_be_mbe_when'][0];
 		$isFrequent = $meta['_ss_be_mbe_isfrequent'][0];
+		$isWeekly = $meta['_ss_be_mbe_isweekly'][0];
+		$weekDay = $meta['_ss_be_mbe_WeeklyDay'][0];
 		$stick2Home = $meta['_ss_be_mbe_stick2home'][0];
 		$where = $meta['_ss_be_mbe_where'][0];
 		$image_url = $meta['_ss_be_mbe_image'][0];
@@ -261,10 +295,10 @@ function ss_be_display_banners($atts){
 		$this_string .= "
 			</div>";
 		$this_string .= "<BR><hr style='color: #D0D0D0; background-color: #D0D0D0;'>";
-		if ( $theFilter == 'dances' && $isFrequent == '' ) {
+		if ( $theFilter == 'dances' && ($isFrequent == '' || $isWeekly == '' )) {
 			$this_string = '';
 		}
-		if ( $theFilter == 'events' && $isFrequent == 'yes' ) {
+		if ( $theFilter == 'events' && ($isFrequent == 'yes' || $isWeekly == 'yes') ) {
 			$this_string = '';
 		}		
 		if ( $unique_post != '') {
