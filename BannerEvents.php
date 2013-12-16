@@ -80,7 +80,27 @@ function ss_banner_events_mbe_function( $post ) {
 	$ss_be_mbe_where = get_post_meta($post->ID, '_ss_be_mbe_where', true);
 	$ss_be_mbe_image = get_post_meta($post->ID, '_ss_be_mbe_image', true);
 
-	$ss_be_mbe_weeklyDay = preg_split("/ \| /",$ss_be_mbe_when);
+	$when_split_weekly = preg_split("/ \| /",$ss_be_mbe_when);
+	$ss_be_mbe_weeklyDay = array();
+	$ss_be_mbe_weeklyDayTime_start = array();
+	$ss_be_mbe_weeklyDayTime_end = array();
+	foreach ( $when_split_weekly as &$this_date) {
+		$unconfig = $this_date;
+		$colon_index = strrpos($unconfig,' : ');
+		if ($colon_index !== false) {
+			$this_start_time = preg_split("/ : /",$unconfig);
+			$unconfig = substr($unconfig,0,$colon_index);
+			$dash_index = strrpos($this_start_time[1],' - ');
+			if ($dash_index !== false ) {
+				$time_split = preg_split("/ - /",$this_start_time[1]);
+				array_push($ss_be_mbe_weeklyDayTime_end,$time_split[1]);
+				array_push($ss_be_mbe_weeklyDayTime_start,$time_split[0]);
+			} else {
+				array_push($ss_be_mbe_weeklyDayTime_start,$this_start_time);
+			}
+		}
+		array_push($ss_be_mbe_weeklyDay,$unconfig);
+	}
 
 	echo "Please fill out the information for this event below.";
 	?>
@@ -98,7 +118,7 @@ function ss_banner_events_mbe_function( $post ) {
 	<div id="specific_date" style="display:none;"><blockquote>
 			<span style=" width: 60px; display:inline-block">Begin: </span><input type='text' id="ss_be_mbe_when_begin" name='ss_be_mbe_when_begin' style="width: 100px;" />
 		<br />
-			<span style=" width: 60px; display:inline-block">End: </span><input type='text' id="ss_be_mbe_when_end" name='ss_be_mbe_when_end' style="width:100px;" value ='' />*required
+			<span style=" width: 60px; display:inline-block">End: </span><input type='text' id="ss_be_mbe_when_end" name='ss_be_mbe_when_end' style="width:100px;" value ='' />
 	</blockquote></div>
 
     
@@ -114,7 +134,32 @@ function ss_banner_events_mbe_function( $post ) {
             <option value="Saturday">Saturdays</option>
             <option value="Sunday">Sundays</option>
         </select> 
-		<input type="button" onclick="addWeekdaySelect();" value="Add Extra Day" />
+		<div id="when_select_weeklyOnly" style="display:inline;">
+			<span style=" width: 60px; display:inline-block">Start Time: </span>
+				<select id="ss_be_mbe_when_select_start_t" onchange="updateStartTimes(this,0)">
+					<option>-Select Hour-</option>
+					<? for ($j=12;$j<24;$j++) {
+						$hour = $j%24;
+						for ($k=0;$k<6;$k+=3) {
+							echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 pm</option>
+					';
+						}
+					 } ?>
+				</select>
+			<span style=" width: 60px; display:inline-block">End Time: </span>
+				<select id="ss_be_mbe_when_select_end_t" onchange="updateEndTimes(this,0)">
+					<option>-Select Hour-</option>
+					<? for ($j=5;$j<17;$j++) {
+						$hour = ($j+12)%24;
+						$amPM = ($j >= 12) ? "am" : "pm";
+						for ($k=0;$k<6;$k+=3) {
+							echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 '.$amPM.'</option>
+					';
+						}
+					 } ?>
+				</select>
+			<input type="button" onclick="addWeekdaySelect();" value="Add Extra Day" />
+		</div>
 		</td><td width="50px"></td><td>
 		<span id="frequency_select" style="display:none width: 300px;">
 			<table width="500px"><tr><td>1st</td><td>2nd</td><td>3rd</td><td>4th</td><td>Occassional 5th</td></tr>
@@ -141,6 +186,31 @@ function ss_banner_events_mbe_function( $post ) {
 	            <option value="Saturday">Saturdays</option>
 	            <option value="Sunday">Sundays</option>
 	        </select>
+			<span style=" width: 60px; display:inline-block">Start Time: </span>
+			<select id="ss_be_mbe_when_select_start_t'.$i.'" onchange="updateStartTimes(this,'.($i-1).')">
+				<option>-Select Hour-</option>';
+				for ($j=12;$j<24;$j++) {
+					$hour = $j%24;
+					for ($k=0;$k<6;$k+=3) {
+						echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 pm</option>
+				';
+					}
+				 }
+			echo '
+			</select>
+		<span style=" width: 60px; display:inline-block">End Time: </span>
+			<select id="ss_be_mbe_when_select_end_t'.$i.'" onchange="updateEndTimes(this,'.($i-1).')">
+				<option>-Select Hour-</option>';
+				for ($j=5;$j<17;$j++) {
+					$hour = ($j+12)%24;
+					$amPM = ($j >= 12) ? "am" : "pm";
+					for ($k=0;$k<6;$k+=3) {
+						echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 '.$amPM.'</option>
+				';
+					}
+				 }
+			echo '
+			</select>
 			<input type="button" onclick="removeWeekdaySelect('.$i.');" value="Remove Extra Day" />
 		</div>
 		';
@@ -148,6 +218,9 @@ function ss_banner_events_mbe_function( $post ) {
 		?>
     </blockquote></div><br />
 	</p>
+	<p>Google Calendar Entry ID *Advanced*: <span style='color:#A0A0A0'>all times above must match Google Calendar to display next occurrence</span><BR>
+	<input type='text' name='ss_be_mbe_where' id='ss_be_mbe_where' style="width:100%" value =''>
+	<span style='color:#A0A0A0'>See Administrator to find Calendar ID to correctly link this Banner Event with updated Google Calendar Info</span></p>
 	<p>Where:<BR>
 	<input type='text' name='ss_be_mbe_where' id='ss_be_mbe_where' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_where); ?>'> </p>
 	<p>Link to Event:<BR>
@@ -162,11 +235,12 @@ function ss_banner_events_mbe_function( $post ) {
 	<script>
 		var extra_weekday_indices = new Array();
 		var extra_weekday_values = new Array("","","","","","","");
+		var extra_weekday_start_t = new Array("","","","","","","");
+		var extra_weekday_end_t = new Array("","","","","","","");
 		function put_img_into_place() {
 			var theIMG = document.getElementById('ss_be_mbe_image').value;
 			document.getElementById('ss_be_mbe_img_obj').src = theIMG;
 		}
-
 		function checkExtraWeekDays() {
 			for (i=0;i<window.extra_weekday_values.length;i++ ) {
 				if ( window.extra_weekday_values[i] != ""){
@@ -211,8 +285,12 @@ function ss_banner_events_mbe_function( $post ) {
 			select_id = 'weekday_select'+value;
 			document.getElementById(select_id).style.display = 'none';
 			document.getElementById('ss_be_mbe_weekday_select'+value).selectedIndex = 0;
+			document.getElementById('ss_be_mbe_when_select_start_t'+value).selectedIndex = 0;
+			document.getElementById('ss_be_mbe_when_select_end_t'+value).selectedIndex = 0;
 
 			window.extra_weekday_values[(value-1)] = "";
+			window.extra_weekday_start_t[(value-1)] = "";
+			window.extra_weekday_end_t[(value-1)] = "";
 			update_when_text_forWeekly();
 		}
 		function update_when_text_forWeekly() {
@@ -221,14 +299,32 @@ function ss_banner_events_mbe_function( $post ) {
 			days = "";
 			for (i=0;i<window.extra_weekday_values.length;i++) {
 				if ( window.extra_weekday_values[i] != "" ) {
+					start_t = window.extra_weekday_start_t[i];
+					end_t = window.extra_weekday_end_t[i];
+					this_time = '';
+					if (start_t != "" && end_t != "") {
+						this_time = ' : '+start_t+' - '+end_t;
+					} else if (start_t != "") {
+						this_time = ' : '+start_t;
+					}
 					if (i== 0 ){
-						days = window.extra_weekday_values[i];
+						days = window.extra_weekday_values[i] +this_time;
 					} else {
-						days = days+' | '+window.extra_weekday_values[i];
+						days = days+' | '+window.extra_weekday_values[i] +this_time;
 					}
 				}
 			}
 			document.getElementById('ss_be_mbe_when_text').value = days;
+		}
+		function updateStartTimes(opt,index) {
+			updateTimes(opt,window.extra_weekday_start_t,index);
+		}
+		function updateEndTimes(opt,index) {
+			updateTimes(opt,window.extra_weekday_end_t,index);
+		}
+		function updateTimes(opt,arr,index) {
+			arr[index] = opt.value;
+			update_when_text_forWeekly();
 		}
 		function checkWhenSelected() {
 			if (document.getElementById('ss_be_mbe_isspecific').checked) {
@@ -270,6 +366,7 @@ function ss_banner_events_mbe_function( $post ) {
 						document.getElementById("ss_be_mbe_when_end").value = "";
 						document.getElementById('specific_date').style.display = 'none';
 						document.getElementById("ss_be_mbe_isweekly").checked = false;
+						document.getElementById("when_select_weeklyOnly").style.display = 'none';
 						break;
 					case "ss_be_mbe_isspecific":
 						document.getElementById("ss_be_mbe_isfrequent").checked = false;
@@ -284,6 +381,7 @@ function ss_banner_events_mbe_function( $post ) {
 						document.getElementById('specific_date').style.display = 'none';
 						document.getElementById("ss_be_mbe_isfrequent").checked = false;
 						document.getElementById('frequency_select').style.display = 'none';
+						document.getElementById("when_select_weeklyOnly").style.display = 'inline';
 						break;
 					default:
 						break;
@@ -328,6 +426,7 @@ function ss_banner_events_mbe_function( $post ) {
             if (theCheckbox.checked) {
                 document.getElementById('ss_be_mbe_when_select').disabled = false;
                 document.getElementById('when_select').style.display = 'inline';
+                document.getElementById('when_select_weeklyOnly').style.display = 'inline';
                 document.getElementById('frequency_select').style.display = 'none';
 				<?
 				for ($i=0;$i< count($ss_be_mbe_weeklyDay);$i++) { 
@@ -352,10 +451,57 @@ function ss_banner_events_mbe_function( $post ) {
 						}
 					<? } 
 				} ?>
+				<?
+				for ($i=0;$i< count($ss_be_mbe_weeklyDayTime_start);$i++) { 
+					if ($i == 0 ) {
+				?>
+		                for (var i=0; i<document.getElementById('ss_be_mbe_when_select_start_t').length;i++) {
+		                    if ( "<? echo $ss_be_mbe_weeklyDayTime_start[$i]; ?>" == document.getElementById('ss_be_mbe_when_select_start_t')[i].value) {
+								window.extra_weekday_start_t[<? echo $i ?>] = document.getElementById('ss_be_mbe_when_select_start_t')[i].value;
+		                        document.getElementById('ss_be_mbe_when_select_start_t')[i].selected = "Selected";
+		                        break;
+		                    }
+						}
+					<? 	} else { 
+						$index = $i+1;
+					?>
+						for (var i=0; i<document.getElementById('ss_be_mbe_when_select_start_t<? echo $index ?>').length;i++) {
+		                    if ( "<? echo $ss_be_mbe_weeklyDayTime_start[$i]; ?>" == document.getElementById('ss_be_mbe_when_select_start_t<? echo $index ?>')[i].value) {
+								window.extra_weekday_start_t[<? echo $i ?>] = document.getElementById('ss_be_mbe_when_select_start_t<? echo $index ?>')[i].value;
+		                        document.getElementById('ss_be_mbe_when_select_start_t<? echo $index ?>')[i].selected = "Selected";
+		                        break;
+		                    }
+						}
+					<? } 
+				} ?>
+				<?
+				for ($i=0;$i< count($ss_be_mbe_weeklyDayTime_end);$i++) { 
+					if ($i == 0 ) {
+				?>
+		                for (var i=0; i<document.getElementById('ss_be_mbe_when_select_end_t').length;i++) {
+		                    if ( "<? echo $ss_be_mbe_weeklyDayTime_end[$i]; ?>" == document.getElementById('ss_be_mbe_when_select_end_t')[i].value) {
+								window.extra_weekday_end_t[<? echo $i ?>] = document.getElementById('ss_be_mbe_when_select_end_t')[i].value;
+		                        document.getElementById('ss_be_mbe_when_select_end_t')[i].selected = "Selected";
+		                        break;
+		                    }
+						}
+					<? 	} else { 
+						$index = $i+1;
+					?>
+						for (var i=0; i<document.getElementById('ss_be_mbe_when_select_end_t<? echo $index ?>').length;i++) {
+		                    if ( "<? echo $ss_be_mbe_weeklyDayTime_end[$i]; ?>" == document.getElementById('ss_be_mbe_when_select_end_t<? echo $index ?>')[i].value) {
+								window.extra_weekday_end_t[<? echo $i ?>] = document.getElementById('ss_be_mbe_when_select_end_t<? echo $index ?>')[i].value;
+		                        document.getElementById('ss_be_mbe_when_select_end_t<? echo $index ?>')[i].selected = "Selected";
+		                        break;
+		                    }
+						}
+					<? } 
+				} ?>
 				update_when_text_forWeekly();
             } else {
                 document.getElementById('ss_be_mbe_when_select').disabled = true;
                 document.getElementById('when_select').style.display = 'none';
+                document.getElementById('when_select_weeklyOnly').style.display = 'none';
             }
         }
 		function show_specific_input() {
