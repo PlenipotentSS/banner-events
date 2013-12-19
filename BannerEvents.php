@@ -707,7 +707,7 @@ function ss_be_display_banners($atts){
 		}
 	}
 </style> ";
-	$args = array( 'post_type' => 'banner_events');
+	$args = array( 'post_type' => 'banner_events','posts_per_page' => '-1');
 	$loop = new WP_Query( $args );
 	$first = true;
 	$objectDictionary = array();
@@ -730,6 +730,7 @@ function ss_be_display_banners($atts){
 		$date = "";
 		$specific_begin = "";
 		$specific_end = "";
+		$frequencyDates = array();
 		if ( $isWeekly == 'yes' ){
 			if ( strpos($when, " | ") !== false ) {
 				$date = array();
@@ -752,6 +753,26 @@ function ss_be_display_banners($atts){
 			if ( strpos($when, " | ") !== false ) {
 				$dateFreq = preg_split("/ \| /",$when);
 				$date = $dateFreq[0];
+				$frequency = preg_split("/,/",$dateFreq[1]);
+				foreach ($frequency as &$number) {
+					if ($number != "" ) {
+						switch ($number) {	
+							case "1":
+								$number = "1st";
+								break;
+							case "2":
+								$number = "2nd";
+								break;
+							case "3":
+								$number = "3rd";
+								break;
+							default:
+								$number = $number."th";
+								break;
+						}
+						array_push($frequencyDates,$number);
+					}
+				}
 			}
 		} else if ( $isSpecific == 'yes' ) {
 			if ( strpos($when, " | ") !== false ) {
@@ -787,6 +808,11 @@ function ss_be_display_banners($atts){
 			$end = ($specific_end == "") ? "" : " - ".$specific_end;
 			$this_string .= "
 			<b><small>WHEN:</small></b> ".$specific_begin.$end."<br>";
+		} else if (count($frequencyDates) > 0) {
+			$freqDays = implode(", ",$frequencyDates);
+			$string_s = (count($frequencyDates) > 1) ? "s" : "";
+			$this_string .= "
+			<b><small>WHEN:</small></b> Every ".$freqDays." ".$date.$string_s." of the Month<br>";
 		} else { 
 			$this_string .= "
 			<b><small>WHEN:</small></b> ".$when."<br>";
