@@ -79,6 +79,11 @@ function ss_banner_events_mbe_function( $post ) {
 	$ss_be_mbe_stick2home = (get_post_meta($post->ID, '_ss_be_mbe_stick2home', true) == 'yes') ? 'checked="yes"' : '';
 	$ss_be_mbe_where = get_post_meta($post->ID, '_ss_be_mbe_where', true);
 	$ss_be_mbe_image = get_post_meta($post->ID, '_ss_be_mbe_image', true);
+	$ss_be_mbe_google_urls = get_post_meta($post->ID, '_ss_be_mbe_google_urls', true);
+
+	if ($ss_be_mbe_google_urls == null ){
+		$ss_be_mbe_google_urls = array("","","","","","","");
+	}
 
 	$when_split_weekly = preg_split("/ \| /",$ss_be_mbe_when);
 	$ss_be_mbe_weeklyDay = array();
@@ -109,7 +114,7 @@ function ss_banner_events_mbe_function( $post ) {
 	<input type='checkbox' name='ss_be_mbe_stick2home' value='yes' <?echo $ss_be_mbe_stick2home ?>> Advertise for Home Page</p>
 	<p>Title:<br />
 	<input type='text' name='ss_be_mbe_title' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_title); ?>'> </p>
-	<p>When: <span id="when_text" style="display:inline-block;"><input type='text' id="ss_be_mbe_when_text" name='ss_be_mbe_when' style="width:500px;" value ='<? echo esc_attr($ss_be_mbe_when); ?>' /></span>
+	<p>When: <span id="when_text" style="display:none;"><input type='text' id="ss_be_mbe_when_text" name='ss_be_mbe_when' style="width:500px;" value ='<? echo esc_attr($ss_be_mbe_when); ?>' /></span>
 	<table width="100%">
 		<tr><td><center><input type='checkbox' id="ss_be_mbe_isspecific" name="ss_be_mbe_isspecific" onChange="show_specific_input();max_select(this);" value='yes' <?echo $ss_be_mbe_isspecific ?> /> Specific Date(s)</center></td>
 		<td><center><input type='checkbox' id="ss_be_mbe_isweekly" name='ss_be_mbe_isweekly' onChange="weekly_select(); max_select(this);" value='yes' <?echo $ss_be_mbe_isweekly ?> /> Weekly Dance</center></td>
@@ -140,8 +145,9 @@ function ss_banner_events_mbe_function( $post ) {
 					<option>-Select Hour-</option>
 					<? for ($j=12;$j<24;$j++) {
 						$hour = $j%24;
-						for ($k=0;$k<6;$k+=3) {
-							echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 pm</option>
+						for ($k=0;$k<60;$k+=15) {
+							$k = ($k == 0 ) ? "00" : $k;
+							echo '<option value="'.$hour.''.$k.'">'.$hour.':'.$k.' pm</option>
 					';
 						}
 					 } ?>
@@ -152,8 +158,9 @@ function ss_banner_events_mbe_function( $post ) {
 					<? for ($j=5;$j<17;$j++) {
 						$hour = ($j+12)%24;
 						$amPM = ($j >= 12) ? "am" : "pm";
-						for ($k=0;$k<6;$k+=3) {
-							echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 '.$amPM.'</option>
+						for ($k=0;$k<60;$k+=15) {
+							$k = ($k == 0 ) ? "00" : $k;
+							echo '<option value="'.$hour.''.$k.'">'.$hour.':'.$k.' '.$amPM.'</option>
 					';
 						}
 					 } ?>
@@ -191,8 +198,9 @@ function ss_banner_events_mbe_function( $post ) {
 				<option>-Select Hour-</option>';
 				for ($j=12;$j<24;$j++) {
 					$hour = $j%24;
-					for ($k=0;$k<6;$k+=3) {
-						echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 pm</option>
+					for ($k=0;$k<60;$k+=15) {
+						$k = ($k == 0 ) ? "00" : $k;
+						echo '<option value="'.$hour.''.$k.'">'.$hour.':'.$k.' pm</option>
 				';
 					}
 				 }
@@ -204,8 +212,9 @@ function ss_banner_events_mbe_function( $post ) {
 				for ($j=5;$j<17;$j++) {
 					$hour = ($j+12)%24;
 					$amPM = ($j >= 12) ? "am" : "pm";
-					for ($k=0;$k<6;$k+=3) {
-						echo '<option value="'.$hour.''.$k.'0">'.$hour.':'.$k.'0 '.$amPM.'</option>
+					for ($k=0;$k<60;$k+=15) {
+						$k = ($k == 0 ) ? "00" : $k;
+						echo '<option value="'.$hour.''.$k.'">'.$hour.':'.$k.' '.$amPM.'</option>
 				';
 					}
 				 }
@@ -219,7 +228,15 @@ function ss_banner_events_mbe_function( $post ) {
     </blockquote></div><br />
 	</p>
 	<p>Google Calendar Entry ID *Advanced*: <span style='color:#A0A0A0'>all times above must match Google Calendar to display next occurrence</span><BR>
-	<input type='text' name='ss_be_mbe_where' id='ss_be_mbe_where' style="width:100%" value =''>
+		<? for ($i=0;$i<7;$i++ ){
+		if ($i == 0 ) { ?>
+	<table width="100%"><tr><td id="weekly_google_day<? echo $i; ?>" width="110px"> - No Day Selected - </td><td><input type='text' name='ss_be_mbe_google_url0' style="width:100%" value ='<? echo $ss_be_mbe_google_urls[$i]; ?>'></td></tr></table>
+		<? } else { ?>
+	<div id="show_weekly_google<? echo $i; ?>" style="display:none;">
+		<table width="100%"><tr><td id="weekly_google_day<? echo $i; ?>" width="110px"> </td><td><input type='text' name='ss_be_mbe_google_url<? echo $i; ?>' style="width:100%" value ='<? echo $ss_be_mbe_google_urls[$i]; ?>'></td></tr></table>
+	</div>
+		<? } ?>
+	<? } ?>
 	<span style='color:#A0A0A0'>See Administrator to find Calendar ID to correctly link this Banner Event with updated Google Calendar Info</span></p>
 	<p>Where:<BR>
 	<input type='text' name='ss_be_mbe_where' id='ss_be_mbe_where' style="width:100%" value ='<? echo esc_attr($ss_be_mbe_where); ?>'> </p>
@@ -235,6 +252,7 @@ function ss_banner_events_mbe_function( $post ) {
 	<script>
 		var extra_weekday_indices = new Array();
 		var extra_weekday_values = new Array("","","","","","","");
+		var google_urls = new Array("","","","","","","");
 		var extra_weekday_start_t = new Array("","","","","","","");
 		var extra_weekday_end_t = new Array("","","","","","","");
 		function put_img_into_place() {
@@ -291,6 +309,8 @@ function ss_banner_events_mbe_function( $post ) {
 			window.extra_weekday_values[(value-1)] = "";
 			window.extra_weekday_start_t[(value-1)] = "";
 			window.extra_weekday_end_t[(value-1)] = "";
+			window.google_urls[(value-1)] = "";
+			displayGoogleURLS()
 			update_when_text_forWeekly();
 		}
 		function update_when_text_forWeekly() {
@@ -391,14 +411,18 @@ function ss_banner_events_mbe_function( $post ) {
 		function set_weekly_addition(opt) {
 			if ( window.extra_weekday_values.indexOf(opt.value) == -1 ) {
 				index = opt.getAttribute("this_index");
-				window.extra_weekday_values[(parseInt(index)-1)] = opt.value;
+				window.extra_weekday_values[(parseInt(index)-1)] = opt.value;	
+				window.google_urls[(parseInt(index)-1)] = opt.value+'s';	
+				displayGoogleURLS();
 				update_when_text_forWeekly();
 			}
 		}
 		function set_weekly(opt) {
 			if (document.getElementById("ss_be_mbe_isweekly").checked){
 				document.getElementById('ss_be_mbe_when_text').value = opt.value;
-				window.extra_weekday_values[0] = opt.value;
+				window.extra_weekday_values[0] = opt.value;		
+				window.google_urls[0] = opt.value+'s';	
+				displayGoogleURLS();
 			}
 		}
 		function frequency_select() {
@@ -435,6 +459,7 @@ function ss_banner_events_mbe_function( $post ) {
 		                for (var i=0; i<document.getElementById('ss_be_mbe_when_select').length;i++) {
 		                    if ( "<? echo $ss_be_mbe_weeklyDay[$i]; ?>" == document.getElementById('ss_be_mbe_when_select')[i].value) {
 								window.extra_weekday_values[<? echo $i ?>] = document.getElementById('ss_be_mbe_when_select')[i].value;
+								window.google_urls[<? echo $i ?>] = document.getElementById('ss_be_mbe_when_select')[i].value+'s';
 		                        document.getElementById('ss_be_mbe_when_select')[i].selected = "Selected";
 		                        break;
 		                    }
@@ -445,6 +470,7 @@ function ss_banner_events_mbe_function( $post ) {
 						for (var i=0; i<document.getElementById('ss_be_mbe_weekday_select<? echo $index ?>').length;i++) {
 		                    if ( "<? echo $ss_be_mbe_weeklyDay[$i]; ?>" == document.getElementById('ss_be_mbe_weekday_select<? echo $index ?>')[i].value) {
 								window.extra_weekday_values[<? echo $i ?>] = document.getElementById('ss_be_mbe_weekday_select<? echo $index ?>')[i].value;
+								window.google_urls[<? echo $i ?>] = document.getElementById('ss_be_mbe_weekday_select<? echo $index ?>')[i].value+'s';
 		                        document.getElementById('ss_be_mbe_weekday_select<? echo $index ?>')[i].selected = "Selected";
 		                        break;
 		                    }
@@ -498,6 +524,7 @@ function ss_banner_events_mbe_function( $post ) {
 					<? } 
 				} ?>
 				update_when_text_forWeekly();
+				displayGoogleURLS();
             } else {
                 document.getElementById('ss_be_mbe_when_select').disabled = true;
                 document.getElementById('when_select').style.display = 'none';
@@ -510,6 +537,21 @@ function ss_banner_events_mbe_function( $post ) {
 				document.getElementById('specific_date').style.display = 'inline';
 			} else {
 				document.getElementById('specific_date').style.display = 'none';
+			}
+		}
+		function displayGoogleURLS() {
+			for (i=0;i<window.google_urls.length;i++) {
+				if ( window.google_urls[i] != "" ) {
+					document.getElementById('weekly_google_day'+i).innerHTML = window.google_urls[i];
+					if (i != 0 ) {
+						document.getElementById('show_weekly_google'+i).style.display = 'block';
+					}
+				} else {
+					document.getElementById('weekly_google_day'+i).innerHMTL = '- No Day Selected';
+					if (i != 0 ) {
+						document.getElementById('show_weekly_google'+i).style.display = 'none';
+					}
+				}
 			}
 		}
 		$(function() {
@@ -556,6 +598,16 @@ function ss_be_mbe_save_meta( $post_id ) {
 						or update_post_meta( $post_id, '_ss_be_mbe_stick2home', strip_tags($_POST['ss_be_mbe_stick2home']) );
 	add_post_meta($post_id, '_ss_be_mbe_where', strip_tags($_POST['ss_be_mbe_where']) , true ) 
 						or update_post_meta( $post_id, '_ss_be_mbe_where', $_POST['ss_be_mbe_where'] );
+
+	$google_url_arr = array();
+	for ($i=0;$i<7;$i++){
+		$name = 'ss_be_mbe_google_url'.$i;
+		array_push($google_url_arr, $_POST[$name]);
+
+	}
+	add_post_meta($post_id, '_ss_be_mbe_google_urls', $google_url_arr , true ) 
+						or update_post_meta( $post_id, '_ss_be_mbe_google_urls', $google_url_arr );
+
 	if ( isset($_POST['ss_be_mbe_image']) ){
 		update_post_meta( $post_id, '_ss_be_mbe_image', esc_url_raw( $_POST['ss_be_mbe_image']) );
 	}	
@@ -612,9 +664,13 @@ function ss_be_display_banners($atts){
 	}
 	if ( isset($atts['title']) ) {
 		$title = $atts['title'];
-		$return_string = "<div><hr style='color: #D0D0D0; background-color: #D0D0D0;'>
+		if ($title != "" ) {
+			$return_string = "<div><hr style='color: #D0D0D0; background-color: #D0D0D0;'>
 <h1>".$title."</h1>
 <hr style='color: #D0D0D0; background-color: #D0D0D0;'>";
+		} else {
+			$return_string = "";
+		}
 	}
 	$designate = '';
 	if ( isset($atts['designate']) ) {
@@ -654,6 +710,8 @@ function ss_be_display_banners($atts){
 	$args = array( 'post_type' => 'banner_events');
 	$loop = new WP_Query( $args );
 	$first = true;
+	$objectDictionary = array();
+
 	while ( $loop->have_posts() ) {
 		$loop->the_post();
 		$id = $loop->post->ID;
@@ -664,10 +722,51 @@ function ss_be_display_banners($atts){
 		$link = $meta['_ss_be_mbe_link'][0];
 		$fb = $meta['_ss_be_mbe_fb'][0];
 		$when = $meta['_ss_be_mbe_when'][0];
-		$isFrequent = $meta['_ss_be_mbe_isfrequent'][0];
+
+		
 		$isWeekly = $meta['_ss_be_mbe_isweekly'][0];
+		$isFrequent = $meta['_ss_be_mbe_isfrequent'][0];
+		$isSpecific = $meta['_ss_be_mbe_isspecific'][0];
+		$date = "";
+		$specific_begin = "";
+		$specific_end = "";
+		if ( $isWeekly == 'yes' ){
+			if ( strpos($when, " | ") !== false ) {
+				$date = array();
+				$weekDays = preg_split("/ \| /",$when);
+				foreach ($weekDays as &$day ) {
+					if ( strpos($day, " : ") !== false ) {
+						$dayHours = preg_split("/ : /",$day);
+						array_push($date,$dayHours[0]);
+					} else {
+						array_push($date,$day);
+					}
+				}
+			} else if ( strpos($when, " : ") !== false ) {
+				$dayHours = preg_split("/ : /",$when);
+				$date = $dayHours[0];
+			} else {
+				$date = $when;
+			}				
+		} else if ( $isFrequent == 'yes' ) {
+			if ( strpos($when, " | ") !== false ) {
+				$dateFreq = preg_split("/ \| /",$when);
+				$date = $dateFreq[0];
+			}
+		} else if ( $isSpecific == 'yes' ) {
+			if ( strpos($when, " | ") !== false ) {
+				$beginEnd = preg_split("/ \| /",$when);
+				$specific_begin = str_replace("specific:","",$beginEnd[0]);
+				$specific_end = str_replace("specific:","",$beginEnd[1]);
+			}
+		}
+
 		$stick2Home = $meta['_ss_be_mbe_stick2home'][0];
+
 		$where = $meta['_ss_be_mbe_where'][0];
+		$where_nospaces = str_replace(" ","+",$where);
+		$where_url = "https://maps.google.com/maps?q=".$where_nospaces;
+
 		$image_url = $meta['_ss_be_mbe_image'][0];
 		$this_string = '';
 		$this_string .= "<div class='banner_single_wrapper'>";
@@ -682,10 +781,20 @@ function ss_be_display_banners($atts){
 			$this_string .= "
 			<h1><a class='regular_link' href='".$link."' target=_new>".$title."</a></h1>";
 		}
+		$this_string .= "
+			<i style='font-size:120%'>".$sub_title."</i><BR>";
+		if ( $specific_begin != "" ) {
+			$end = ($specific_end == "") ? "" : " - ".$specific_end;
 			$this_string .= "
-			<i style='font-size:120%'>".$sub_title."</i><BR>
-			<b><small>WHEN:</small></b> ".$when."<br>
-			<b><small>WHERE:</small></b> ".$where."<br>";
+			<b><small>WHEN:</small></b> ".$specific_begin.$end."<br>";
+		} else { 
+			$this_string .= "
+			<b><small>WHEN:</small></b> ".$when."<br>";
+		}
+		if ($where != "") {
+			$this_string .= "
+			<b><small>WHERE:</small></b> <a href='".$where_url."' target='_new'>".$where."</a><br>";
+		}
 		if ( isset($atts['extra_field']) && isset($atts['extra_value']) ) {
 			$this_string .="
 			<b><small>".strtoupper($atts['extra_field']).":</small></b> ".$atts['extra_value']."<br>";
@@ -703,10 +812,10 @@ function ss_be_display_banners($atts){
 		$this_string .= "
 			</div>";
 		$this_string .= "<BR><hr style='color: #D0D0D0; background-color: #D0D0D0;'>";
-		if ( $theFilter == 'dances' && ($isFrequent == '' || $isWeekly == '' )) {
+		if ( $theFilter == 'dances' && ($isFrequent == '' && $isWeekly == '' )) {
 			$this_string = '';
 		}
-		if ( $theFilter == 'events' && ($isFrequent == 'yes' || $isWeekly == 'yes') ) {
+		if ( $theFilter == 'events' && $isSpecific == '' ) {
 			$this_string = '';
 		}		
 		if ( $unique_post != '') {
@@ -728,10 +837,82 @@ function ss_be_display_banners($atts){
 				}
 			}
 		}			
-		$return_string .= $this_string;
+		
+		if (($theFilter == 'events' || ($designate == 'home' && !$stick2Home == '') ) && $specific_begin != "") {
+			$now = strtotime('now');
+			$eventTime;
+			if ($specific_end != '' ) {
+				$eventTime = strtotime($specific_end);
+			} else {
+				$eventTime = strtotime($specific_begin);
+			}
+			if ($eventTime > $now ) {
+				$objectDictionary[$specific_begin] = $this_string;
+			}
+		} else if ( $theFilter == 'dances' && is_array($date) ) {
+			foreach ($date as &$thisDate) {
+				if ( is_array($objectDictionary[$thisDate]) ) {
+					$thisDay = $objectDictionary[$thisDate];
+					array_push($thisDay,$this_string);
+					$objectDictionary[$thisDate] = $thisDay;
+				} else {
+					$thisDay = array();
+					array_push($thisDay,$this_string);
+					$objectDictionary[$thisDate] = $thisDay;
+				}
+			}
+		} else if ( $theFilter == 'dances' && $date != "" ) {
+			if ( is_array($objectDictionary[$date]) ) {	
+					$thisDay = $objectDictionary[$date];
+					array_push($thisDay,$this_string);
+					$objectDictionary[$date] = $thisDay;
+			} else {
+					$thisDay = array();
+					array_push($thisDay,$this_string);
+					$objectDictionary[$date] = $thisDay;	
+			}
+		} else {
+			$return_string .= $this_string;
+		}
 	}
+
+	if ($theFilter == 'dances') {
+		uksort($objectDictionary,"cmp_week_events");
+		foreach ($objectDictionary as $key => $event ) {
+			$return_string .= "<h2><center>".$key."</center></h2>";
+			$return_string .= "<hr style='color: #D0D0D0; background-color: #D0D0D0;'>";
+			foreach ( $event as &$string ) {
+				$return_string .= $string;
+			}
+		}
+	} else if ( count($objectDictionary) > 0 ) {
+		uksort($objectDictionary,"cmp_specific_events");
+		foreach ($objectDictionary as $key => $event ) {
+			$return_string .= $event;
+		}
+	}
+
 	$return_string .= "</div>";
 	return $return_string;
 }
 
+function cmp_week_events($a , $b) {
+	$weekDayVals = array(	"Monday" 	=> 0,
+							"Tuesday" 	=> 1,
+							"Wednesday" => 2,
+							"Thursday" 	=> 3,
+							"Friday"	=> 4,
+							"Saturday" 	=> 5,
+							"Sunday" 	=> 6
+							);
+	$aVal = $weekDayVals[$a];
+	$bVal = $weekDayVals[$b];
+	return strcasecmp($aVal,$bVal);
+}
+
+function cmp_specific_events($a , $b) {
+	$a_date = strtotime($a);
+	$b_date = strtotime($b);
+	return strcasecmp($a_date,$b_date);
+}
 ?>
